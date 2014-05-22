@@ -1,0 +1,257 @@
+#include "RooRealVar.h"
+#include "RooAbsPdf.h"
+#include "RooExponential.h"
+#include "RooGaussian.h"
+#include "RooPlot.h"
+#include "TCanvas.h"
+#include "RooConstVar.h"
+#include "RooDataSet.h"
+#include "RooHybridBDTAutoPdf.h"
+#include "RooFormulaVar.h"
+#include "RooProdPdf.h"
+#include "RooUniform.h"
+#include "TRandom.h"
+#include "TGraph.h"
+#include "TProfile.h"
+#include "RooAddPdf.h"
+#include "RooNDKeysPdf.h"
+#include "RooExtendPdf.h"
+#include "RooMinimizer.h"
+#include "TStyle.h"
+#include "TFile.h"
+#include "TNtuple.h"
+#include "HybridGBRForest.h"
+#include "RooProduct.h"
+#include "RooChebychev.h"
+#include "RooBernstein.h"
+#include "RooPolynomial.h"
+#include "RooGenericPdf.h"
+//#include "HZZ2L2QRooPdfs.h"
+#include "RooDoubleCBFast.h"
+#include "RooArgSet.h"
+#include "RooArgList.h"
+#include "RooCBShape.h"
+#include "RooWorkspace.h"
+#include "TH1D.h"
+#include "TH2D.h"
+#include "TPaveLabel.h"
+#include "TChain.h"
+#include "TCut.h"
+#include "TLine.h"
+#include "TLegend.h"
+#include "RooRandom.h"
+#include "RooAddition.h"
+#include "TSystem.h"
+#include "RooLinearVar.h"
+
+
+using namespace RooFit;
+ 
+
+void RegressionTesting(bool dobarrel=true) {
+  
+  TString fname;
+
+  if (dobarrel) 
+    fname = "wereg_ph_eb.root";
+  else if (!dobarrel) 
+    fname = "wereg_ph_ee.root";
+  
+  
+  TFile *fws = TFile::Open(fname); 
+  RooWorkspace *ws = (RooWorkspace*)fws->Get("wereg");
+
+
+  ws->Print();
+
+
+  //read variables from workspace
+  RooGBRTargetFlex *meantgt = static_cast<RooGBRTargetFlex*>(ws->arg("sigmeant"));  
+  
+  RooRealVar *tgtvar = ws->var("tgtvar");
+  RooRealVar *Pt = new RooRealVar("ph.genpt","ph.genpt",1.);
+  Pt->setRange(0.,200.);
+  Pt->setBins(100);  
+
+  RooArgList vars;
+  vars.add(meantgt->FuncVars());
+  vars.add(*tgtvar);
+  vars.add(*Pt);
+
+ 
+  //read testing dataset from TTree
+  RooRealVar weightvar("weightvar","",1.);
+
+  TTree *dtree;
+  
+    TFile *fdin = TFile::Open("~/eos/cms/store/cmst3/user/bendavid/idTreesAug1/hgg-2013Final8TeV_ID_s12-h124gg-gf-v7n_noskim.root");
+    TDirectory *ddir = (TDirectory*)fdin->FindObjectAny("PhotonTreeWriterPreselNoSmear");
+    dtree = (TTree*)ddir->Get("hPhotonTreeSingle");       
+  
+  //selection cuts for testing
+  TCut selcut;
+  if (dobarrel) 
+    selcut = "ph.genpt>25. && ph.isbarrel && ph.ispromptgen"; 
+  else
+    selcut = "ph.genpt>25. && !ph.isbarrel && ph.ispromptgen"; 
+  
+  TCut selweight = "xsecweight(procidx)*puweight(numPU,procidx)";
+  TCut prescale10 = "(evt%10==0)";
+  TCut prescale10alt = "(evt%10==1)";
+  TCut prescale25 = "(evt%25==0)";
+  TCut prescale100 = "(evt%100==0)";  
+  TCut prescale1000 = "(evt%1000==0)";  
+  TCut evenevents = "(evt%2==0)";
+  TCut oddevents = "(evt%2==1)";
+  TCut prescale100alt = "(evt%100==1)";
+  TCut prescale1000alt = "(evt%1000==1)";
+  TCut prescale50alt = "(evt%50==1)";
+  
+    weightvar.SetTitle(selcut);
+  
+
+  //make testing dataset
+  RooDataSet *hdata = RooTreeConvert::CreateDataSet("hdata",dtree,vars,weightvar);   
+
+  weightvar.SetTitle(prescale10alt*selcut);
+
+  //make reduced testing dataset for integration over conditional variables
+  RooDataSet *hdatasmall = RooTreeConvert::CreateDataSet("hdatasmall",dtree,vars,weightvar);     
+    
+  //retrieve full pdf from workspace
+  RooAbsPdf *sigpdf = ws->pdf("sigpdf");
+  
+  //input variables
+  RooRealVar *scetavar = ws->var("var_1");
+  scetavar->setBins(100);
+  scetavar->setRange(-3.,3.);
+
+  RooRealVar *scphivar = ws->var("var_2");
+  scphivar->setBins(100);
+  scphivar->setRange(-3.2,3.2);
+
+  RooRealVar *scr9var = ws->var("var_3");
+  scr9var->setBins(100);
+  scr9var->setRange(0,1.2);
+
+  RooRealVar *scphiwidthvar = ws->var("var_5");
+  scphiwidthvar->setBins(100);
+  scphiwidthvar->setRange(0,0.1);
+
+  RooRealVar *scetawidthvar = ws->var("var_4");
+  scetawidthvar->setBins(100);
+  scetawidthvar->setRange(0,0.03);
+
+  RooRealVar *nVtxvar = ws->var("var_9");
+  nVtxvar->setBins(50);
+  nVtxvar->setRange(0,50);
+
+
+  //regressed output functions
+  RooAbsReal *sigmeanlim = ws->function("sigmeanlim");
+  RooAbsReal *sigwidthlim = ws->function("sigwidthlim");
+  RooAbsReal *signlim = ws->function("signlim");
+  RooAbsReal *sign2lim = ws->function("sign2lim");
+
+  //formula for corrected energy/true energy ( 1.0/(etrue/eraw) * regression mean)
+  RooFormulaVar ecor("ecor","","1./(@0)*@1",RooArgList(*tgtvar,*sigmeanlim));
+  RooRealVar *ecorvar = (RooRealVar*)hdata->addColumn(ecor);
+  ecorvar->setRange(0.,2.);
+  ecorvar->setBins(800);
+  
+  //formula for raw energy/true energy (1.0/(etrue/eraw))
+  RooFormulaVar raw("raw","","1./@0",RooArgList(*tgtvar));
+  RooRealVar *rawvar = (RooRealVar*)hdata->addColumn(raw);
+  rawvar->setRange(0.,2.);
+  rawvar->setBins(800);
+
+  //clone data and add regression outputs for plotting
+  RooDataSet *hdataclone = new RooDataSet(*hdata,"hdataclone");
+  RooRealVar *meanvar = (RooRealVar*)hdataclone->addColumn(*sigmeanlim);
+  meanvar->setRange(0.8,1.2);
+  meanvar->setBins(800);
+  RooRealVar *widthvar = (RooRealVar*)hdataclone->addColumn(*sigwidthlim);
+  widthvar->setRange(0.,0.05);
+  widthvar->setBins(800);
+
+  TString name;
+  if (dobarrel) 
+    name = "resultsEB.root";
+  else if (!dobarrel) 
+    name = "resultsEE.root";
+
+  TFile *file=new TFile(name, "RECREATE");
+
+  //create histograms for eraw/etrue and ecor/etrue to quantify regression performance
+  TH1 *heraw = hdata->createHistogram("hraw",*rawvar,Binning(800,0.,2.));
+  TH1 *hecor = hdata->createHistogram("hecor",*ecorvar);  
+  hecor->Write("hCor_true");
+  heraw->Write("hRaw_true"); 
+  
+  //create histograms for ecor/eraw
+  TH1 *hecor_raw = hdataclone->createHistogram("hraw",*meanvar,Binning(500,0.8,1.2));
+  hecor_raw->Write("hCor_raw");
+
+  // Correction vs input variables
+  
+  TH2 *hCor_eta=hdataclone->createHistogram(*scetavar,*meanvar);
+  TProfile *profCorEta= new TProfile();
+  profCorEta=hCor_eta->ProfileX("",1,-1,"s");
+  profCorEta->SetMinimum(0.9);
+  profCorEta->SetMaximum(1.1);
+  profCorEta->Write("profEta");
+
+  TH2 *hCor_phi=hdataclone->createHistogram(*scphivar,*meanvar);
+  TProfile *profCorphi= new TProfile();
+  profCorphi=hCor_phi->ProfileX("",1,-1,"s");
+  profCorphi->SetMinimum(0.9);
+  profCorphi->SetMaximum(1.1);
+  profCorphi->Write("profPhi");
+
+  TH2 *hCor_r9=hdataclone->createHistogram(*scr9var,*meanvar);
+  TProfile *profCorr9= new TProfile();
+  profCorr9=hCor_r9->ProfileX("",1,-1,"s");
+  profCorr9->SetMinimum(0.9);
+  profCorr9->SetMaximum(1.2);
+  profCorr9->Write("profR9");
+
+  TH2 *hCor_phiwidth=hdataclone->createHistogram(*scphiwidthvar,*meanvar);
+  TProfile *profCorphiwidth= new TProfile();
+  profCorphiwidth=hCor_phiwidth->ProfileX("",1,-1,"s");
+  profCorphiwidth->SetMinimum(0.9);
+  profCorphiwidth->SetMaximum(1.2);
+  profCorphiwidth->Write("profPhiWidth");
+
+  TH2 *hCor_etawidth=hdataclone->createHistogram(*scetawidthvar,*meanvar);
+  TProfile *profCoretawidth= new TProfile();
+  profCoretawidth=hCor_etawidth->ProfileX("",1,-1,"s");
+  profCoretawidth->SetMinimum(0.9);
+  profCoretawidth->SetMaximum(1.1);
+  profCoretawidth->Write("profEtaWidth");
+
+  TH2 *hCor_nVtx=hdataclone->createHistogram(*nVtxvar,*meanvar);
+  TProfile *profCornVtx= new TProfile();
+  profCornVtx=hCor_nVtx->ProfileX("",1,-1,"s");
+  profCornVtx->SetMinimum(0.9);
+  profCornVtx->SetMaximum(1.1);
+  profCornVtx->Write("ProfNvtx");
+
+  //Plot SigmaE/E vs Pt
+
+  TH2 *hCor_Pt=hdataclone->createHistogram(*Pt,*ecorvar);
+  TProfile *profCorPt= new TProfile();
+  profCorPt=hCor_Pt->ProfileX("",1,-1,"s");
+  profCorPt->SetMinimum(0.9);
+  profCorPt->SetMaximum(1.1);
+  profCorPt->Write("ProfPtCor");
+ 
+  TH2 *hRes_Pt=hdataclone->createHistogram(*Pt,*widthvar);
+  TProfile *profResPt= new TProfile();
+  profResPt=hRes_Pt->ProfileX("",1,-1,"s");
+  profResPt->SetMinimum(0.);
+  profResPt->SetMaximum(0.03);
+  profResPt->Write("ProfPtRes");  
+   
+  file->Close();
+
+}
