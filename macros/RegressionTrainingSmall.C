@@ -75,7 +75,7 @@ void initweights(TChain *chain, float *xsecs, float lumi) {
   
 }
 
-void RegressionTraining(bool dobarrel=true) {
+void RegressionTrainingSmall(bool dobarrel=true) {
    
   
   //build vectors with list of input variables
@@ -159,8 +159,8 @@ void RegressionTraining(bool dobarrel=true) {
   TChain *tree;
 
      tree = new TChain("gedPhotonTree/RegressionTree");
-     tree->Add("/afs/cern.ch/work/b/bcourbon/RegressionPhoton_ntuple_noPU.root");
-     //tree->Add("Trees/test_Ben.root");
+     tree->Add("Trees/RegressionPhoton_ntuple_noPU_small.root");
+
  /*   
   float xsecs[50];
   xsecs[0] = 0.001835*81930.0;
@@ -178,7 +178,7 @@ void RegressionTraining(bool dobarrel=true) {
     selcut = "genPt>16. && scIsEB"; 
   }
   else {
-    selcut = "genPt>16. && !scIsEB";     
+    selcut = "genpt>16. && !scIsEB";     
   }
   
   
@@ -195,7 +195,6 @@ void RegressionTraining(bool dobarrel=true) {
 
   //weightvar title used for per-event weights and selection cuts
 
-    //weightvar.SetTitle(evenevents/**selweight*/*selcut);
     weightvar.SetTitle(evenevents/**selweight*/*selcut);
 
   //create RooDataSet from TChain
@@ -262,7 +261,7 @@ void RegressionTraining(bool dobarrel=true) {
   vdata.push_back(hdata);     
   
   //define minimum event weight per tree node
-  double minweight = 1000;//200
+  double minweight = 200;
   std::vector<double> minweights;
   minweights.push_back(minweight);
   
@@ -270,12 +269,12 @@ void RegressionTraining(bool dobarrel=true) {
   //run training
   if (1) {
     RooHybridBDTAutoPdf bdtpdfdiff("bdtpdfdiff","",tgts,etermconst,r,vdata,vpdf);
-    bdtpdfdiff.SetMinCutSignificance(8.);
+    bdtpdfdiff.SetMinCutSignificance(5.);
     //bdtpdfdiff.SetPrescaleInit(100);
     bdtpdfdiff.SetShrinkage(0.1);
     bdtpdfdiff.SetMinWeights(minweights);
-    bdtpdfdiff.SetMaxNodes(500);
-    bdtpdfdiff.TrainForest(1000);   
+    bdtpdfdiff.SetMaxNodes(750);
+    bdtpdfdiff.TrainForest(1e6);   
   }
      
   //create workspace and output to file
@@ -284,9 +283,9 @@ void RegressionTraining(bool dobarrel=true) {
 
     
   if (dobarrel)
-    wereg->writeToFile("/afs/cern.ch/user/b/bcourbon/EnergyRegression/CMSSW_7_3_0_patch1/src/Regression/SemiParametricRegression/wereg_ph_eb.root");    
+    wereg->writeToFile("wereg_ph_eb_small.root");    
   else if (!dobarrel)
-    wereg->writeToFile("/afs/cern.ch/user/b/bcourbon/EnergyRegression/CMSSW_7_3_0_patch1/src/Regression/SemiParametricRegression/wereg_ph_ee.root");    
+    wereg->writeToFile("wereg_ph_ee_small.root");    
   
   
   return;

@@ -80,52 +80,52 @@ void RegressionTraining(bool dobarrel=true) {
   
   //build vectors with list of input variables
   std::vector<std::string> *varsf = new std::vector<std::string>;
-  varsf->push_back("ph.scrawe");
-  varsf->push_back("ph.sceta");
-  varsf->push_back("ph.scphi");
-  varsf->push_back("ph.r9");  
-  varsf->push_back("ph.scetawidth");
-  varsf->push_back("ph.scphiwidth");  
-  varsf->push_back("ph.scnclusters");
-  varsf->push_back("ph.hoveretower");
+  varsf->push_back("scRawEnergy");
+  varsf->push_back("scEta");
+  varsf->push_back("scPhi");
+  varsf->push_back("scSeedR9");  
+  varsf->push_back("scEtaWidth");
+  varsf->push_back("scPhiWidth");  
+  varsf->push_back("N_ECALClusters");
+  varsf->push_back("hoe");
   varsf->push_back("rho");
   varsf->push_back("nVtx");  
  
-  varsf->push_back("ph.etaseed-ph.sceta");
-  varsf->push_back("atan2(sin(ph.phiseed-ph.scphi),cos(ph.phiseed-ph.scphi))");
-  varsf->push_back("ph.eseed/ph.scrawe");
+  varsf->push_back("scSeedEta-scEta");
+  varsf->push_back("atan2(sin(scSeedPhi-scPhi),cos(scSeedPhi-scPhi))");
+  varsf->push_back("scSeedRawEnergy/scRawEnergy");
   
-  varsf->push_back("ph.e3x3seed/ph.e5x5seed");
-  varsf->push_back("ph.sigietaietaseed");   
-  varsf->push_back("ph.sigiphiphiseed");   
-  varsf->push_back("ph.covietaiphiseed");
-  varsf->push_back("ph.emaxseed/ph.e5x5seed");
-  varsf->push_back("ph.e2ndseed/ph.e5x5seed");
-  varsf->push_back("ph.etopseed/ph.e5x5seed");
-  varsf->push_back("ph.ebottomseed/ph.e5x5seed");
-  varsf->push_back("ph.eleftseed/ph.e5x5seed");
-  varsf->push_back("ph.erightseed/ph.e5x5seed");
-  varsf->push_back("ph.e2x5maxseed/ph.e5x5seed");
-  varsf->push_back("ph.e2x5topseed/ph.e5x5seed");
-  varsf->push_back("ph.e2x5bottomseed/ph.e5x5seed");
-  varsf->push_back("ph.e2x5leftseed/ph.e5x5seed");
-  varsf->push_back("ph.e2x5rightseed/ph.e5x5seed");
+  varsf->push_back("scSeedE3x3/scSeedE5x5");
+  varsf->push_back("scSeedSigmaIetaIeta");   
+  varsf->push_back("scSeedSigmaIphiIphi");   
+  varsf->push_back("scSeedSigmaIetaIphi");
+  varsf->push_back("scSeedEmax/scSeedE5x5");
+  varsf->push_back("scSeedE2nd/scSeedE5x5");
+  varsf->push_back("scSeedETop/scSeedE5x5");
+  varsf->push_back("scSeedEBottom/scSeedE5x5");
+  varsf->push_back("scSeedELeft/scSeedE5x5");
+  varsf->push_back("scSeedERight/scSeedE5x5");
+  varsf->push_back("scSeedE2x5max/scSeedE5x5");
+  varsf->push_back("scSeedE2x5Left/scSeedE5x5");
+  varsf->push_back("scSeedE2x5Right/scSeedE5x5");
+  varsf->push_back("scSeedE2x5Top/scSeedE5x5");
+  varsf->push_back("scSeedE2x5Bottom/scSeedE5x5");
   
   std::vector<std::string> *varseb = new std::vector<std::string>(*varsf);
   std::vector<std::string> *varsee = new std::vector<std::string>(*varsf);
   
-  varseb->push_back("ph.e5x5seed/ph.eseed");
+  varseb->push_back("scSeedE5x5/scSeedRawEnergy");
   
-  varseb->push_back("ph.ietaseed");
-  varseb->push_back("ph.iphiseed");
-  varseb->push_back("(ph.ietaseed-1*abs(ph.ietaseed)/ph.ietaseed)%5");
-  varseb->push_back("(ph.iphiseed-1)%2");       
-  varseb->push_back("(abs(ph.ietaseed)<=25)*((ph.ietaseed-1*abs(ph.ietaseed)/ph.ietaseed)%25) + (abs(ph.ietaseed)>25)*((ph.ietaseed-26*abs(ph.ietaseed)/ph.ietaseed)%20)");
-  varseb->push_back("(ph.iphiseed-1)%20"); 
-  varseb->push_back("ph.etacryseed");
-  varseb->push_back("ph.phicryseed");
+  varseb->push_back("scSeedCryIeta");
+  varseb->push_back("scSeedCryIphi");
+  varseb->push_back("(scSeedCryIeta-1*abs(scSeedCryIeta)/scSeedCryIeta)%5");
+  varseb->push_back("(scSeedCryIphi-1)%2");       
+  varseb->push_back("(abs(scSeedCryIeta)<=25)*((scSeedCryIeta-1*abs(scSeedCryIeta)/scSeedCryIeta)%25) + (abs(scSeedCryIeta)>25)*((scSeedCryIeta-26*abs(scSeedCryIeta)/scSeedCryIeta)%20)");
+  varseb->push_back("(scSeedCryIphi-1)%20"); 
+  varseb->push_back("scSeedCryPhi");
+  varseb->push_back("scSeedCryEta");
 
-  varsee->push_back("ph.scpse/ph.scrawe");
+  varsee->push_back("scPreshowerEnergy/scRawEnergy");
     
   //select appropriate input list for barrel or endcap
   std::vector<std::string> *varslist;
@@ -143,8 +143,8 @@ void RegressionTraining(bool dobarrel=true) {
   RooArgList condvars(vars);
   
   //create RooRealVar for target
-  RooRealVar *tgtvar = new RooRealVar("tgtvar","ph.gene/ph.scrawe",1.);
-  if (!dobarrel) tgtvar->SetTitle("ph.gene/(ph.scrawe + ph.scpse)");  
+  RooRealVar *tgtvar = new RooRealVar("tgtvar","genEnergy/scRawEnergy",1.);
+  if (!dobarrel) tgtvar->SetTitle("genEnergy/(scRawEnergy + scPreshowerEnergy)");  
   
   //add target to full list
   vars.addOwned(*tgtvar);
@@ -157,46 +157,46 @@ void RegressionTraining(bool dobarrel=true) {
 
 
   TChain *tree;
+
+     tree = new TChain("gedPhotonTree/RegressionTree");
+     tree->Add("Trees/RegressionPhoton_ntuple_noPU.root");
+     //tree->Add("Trees/test_Ben.root");
+ /*   
   float xsecs[50];
-
-      
-    tree = new TChain("RunLumiSelectionMod/MCProcessSelectionMod/HLTModP/GoodPVFilterMod/PhotonIDModPresel/PhotonTreeWriterSingle/hPhotonTreeSingle");
-     tree->Add("~/eos/cms/store/cmst3/user/bendavid/regTreesAug1/hgg-2013Final8TeV_reg_s12-pj20_40-2em-v7n_noskim.root");
-     tree->Add("~/eos/cms/store/cmst3/user/bendavid/regTreesAug1/hgg-2013Final8TeV_reg_s12-pj40-2em-v7n_noskim.root");
-
-    xsecs[0] = 0.001835*81930.0;
+  xsecs[0] = 0.001835*81930.0;
     xsecs[1] = 0.05387*8884.0;    
     initweights(tree,xsecs,1.);  
     
     double weightscale = xsecweights[1];
     xsecweights[0] /= weightscale;
     xsecweights[1] /= weightscale;
-
+*/
   
   //training selection cut
   TCut selcut;
   if (dobarrel) {
-    selcut = "ph.genpt>16. && ph.isbarrel && ph.ispromptgen"; 
+    selcut = "genPt>16. && scIsEB"; 
   }
   else {
-    selcut = "ph.genpt>16. && !ph.isbarrel && ph.ispromptgen";     
+    selcut = "genPt>16. && !scIsEB";     
   }
   
   
-  TCut selweight = "xsecweight(procidx)";
-  TCut prescale10 = "(evt%10==0)";
-  TCut prescale20 = "(evt%20==0)";
-  TCut prescale25 = "(evt%25==0)";
-  TCut prescale50 = "(evt%50==0)";
-  TCut prescale100 = "(evt%100==0)";  
-  TCut prescale1000 = "(evt%1000==0)";  
-  TCut evenevents = "(evt%2==0)";
-  TCut oddevents = "(evt%2==1)";  
+  //TCut selweight = "xsecweight(procidx)";
+  TCut prescale10 = "(eventNumber%10==0)";
+  TCut prescale20 = "(eventNumber%20==0)";
+  TCut prescale25 = "(eventNumber%25==0)";
+  TCut prescale50 = "(eventNumber%50==0)";
+  TCut prescale100 = "(eventNumber%100==0)";  
+  TCut prescale1000 = "(eventNumber%1000==0)";  
+  TCut evenevents = "(eventNumber%2==0)";
+  TCut oddevents = "(eventNumber%2==1)";  
 
 
   //weightvar title used for per-event weights and selection cuts
 
-    weightvar.SetTitle(prescale100*selweight*selcut);
+    //weightvar.SetTitle(evenevents/**selweight*/*selcut);
+    weightvar.SetTitle(evenevents/**selweight*/*selcut);
 
   //create RooDataSet from TChain
   RooDataSet *hdata = RooTreeConvert::CreateDataSet("hdata",tree,vars,weightvar);   
@@ -237,8 +237,8 @@ void RegressionTraining(bool dobarrel=true) {
   //define transformations corresponding to parameter bounds for non-parametric outputs  
   RooRealConstraint sigwidthlim("sigwidthlim","",*sigwidtht,0.0002,0.5);
   RooRealConstraint sigmeanlim("sigmeanlim","",*sigmeant,0.2,2.0);
-  RooRealConstraint signlim("signlim","",*signt,1.01,5000.); 
-  RooRealConstraint sign2lim("sign2lim","",*sign2t,1.01,5000.); 
+  RooRealConstraint signlim("signlim","",*signt,1.01,20.); 
+  RooRealConstraint sign2lim("sign2lim","",*sign2t,1.01,20.); 
 
   //define pdf, which depends on transformed outputs (and is intended to be treated as a conditional pdf over the
   //regression inputs in this case)
@@ -262,7 +262,7 @@ void RegressionTraining(bool dobarrel=true) {
   vdata.push_back(hdata);     
   
   //define minimum event weight per tree node
-  double minweight = 200;
+  double minweight = 5000;//200
   std::vector<double> minweights;
   minweights.push_back(minweight);
   
@@ -270,12 +270,12 @@ void RegressionTraining(bool dobarrel=true) {
   //run training
   if (1) {
     RooHybridBDTAutoPdf bdtpdfdiff("bdtpdfdiff","",tgts,etermconst,r,vdata,vpdf);
-    bdtpdfdiff.SetMinCutSignificance(5.);
+    bdtpdfdiff.SetMinCutSignificance(10.);
     //bdtpdfdiff.SetPrescaleInit(100);
     bdtpdfdiff.SetShrinkage(0.1);
     bdtpdfdiff.SetMinWeights(minweights);
-    bdtpdfdiff.SetMaxNodes(750);
-    bdtpdfdiff.TrainForest(1e6);   
+    bdtpdfdiff.SetMaxNodes(100);
+    bdtpdfdiff.TrainForest(500);   
   }
      
   //create workspace and output to file
@@ -284,9 +284,9 @@ void RegressionTraining(bool dobarrel=true) {
 
     
   if (dobarrel)
-    wereg->writeToFile("wereg_ph_eb.root");    
+    wereg->writeToFile("/afs/cern.ch/user/b/bcourbon/EnergyRegression/CMSSW_7_3_0_patch1/src/Regression/SemiParametricRegression/wereg_ph_eb.root");    
   else if (!dobarrel)
-    wereg->writeToFile("wereg_ph_ee.root");    
+    wereg->writeToFile("/afs/cern.ch/user/b/bcourbon/EnergyRegression/CMSSW_7_3_0_patch1/src/Regression/SemiParametricRegression/wereg_ph_ee.root");    
   
   
   return;
