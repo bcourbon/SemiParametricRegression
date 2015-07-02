@@ -262,7 +262,7 @@ void RegressionTraining(bool dobarrel=true) {
   vdata.push_back(hdata);     
   
   //define minimum event weight per tree node
-  double minweight = 5000;//200
+  double minweight = 200;
   std::vector<double> minweights;
   minweights.push_back(minweight);
   
@@ -270,12 +270,12 @@ void RegressionTraining(bool dobarrel=true) {
   //run training
   if (1) {
     RooHybridBDTAutoPdf bdtpdfdiff("bdtpdfdiff","",tgts,etermconst,r,vdata,vpdf);
-    bdtpdfdiff.SetMinCutSignificance(10.);
+    bdtpdfdiff.SetMinCutSignificance(5.);
     //bdtpdfdiff.SetPrescaleInit(100);
     bdtpdfdiff.SetShrinkage(0.1);
     bdtpdfdiff.SetMinWeights(minweights);
-    bdtpdfdiff.SetMaxNodes(100);
-    bdtpdfdiff.TrainForest(500);   
+    bdtpdfdiff.SetMaxNodes(750);
+    bdtpdfdiff.TrainForest(1000);   
   }
      
   //create workspace and output to file

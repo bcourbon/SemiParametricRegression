@@ -119,28 +119,41 @@ void RegressionTestingLight(bool dobarrel=true) {
   //Ecor/Etrue ( =1.0/(etrue/eraw) * regression mean)
   RooFormulaVar cor("cor","","1./(@0)*@1",RooArgList(*tgtvar,*meanvar));
   RooRealVar *corvar = (RooRealVar*)hdata->addColumn(cor);
+  corvar->setRange(0.,2.);
+  corvar->setBins(2000);
   TH1 *hcor = hdata->createHistogram("hcor",*corvar);  
   
   //Eraw/Etrue ( =1.0/(etrue/eraw))
   RooFormulaVar raw("raw","","1./@0",RooArgList(*tgtvar));
   RooRealVar *rawvar = (RooRealVar*)hdata->addColumn(raw);
+  rawvar->setRange(0.,2.);
+  rawvar->setBins(2000);
   TH1 *hraw = hdata->createHistogram("hraw",*rawvar);  
 
   //sigma(E)/Ecor (=1.0/(Ecor/Etrue) * regression width) 
   RooFormulaVar res("res","","1./(@0)*@1",RooArgList(*meanvar,*widthvar));
-  RooRealVar *resvar = (RooRealVar*)hdataclone->addColumn(res);
+  RooRealVar *resvar = (RooRealVar*)hdata->addColumn(res);
+  resvar->setRange(0.,0.1);
+  resvar->setBins(1000);
   TH1 *hres = hdata->createHistogram("hres",*resvar);  
 
+
   //Ecor = Eraw * regression mean)
-  RooFormulaVar ecor("cor","","@0*@1",RooArgList(*eraw,*meanvar));
+  RooFormulaVar ecor("ecor","","@0*@1",RooArgList(*erawvar,*meanvar));
   RooRealVar *ecorvar = (RooRealVar*)hdata->addColumn(ecor);  
+  ecorvar->setRange(0.,2000.);
+  ecorvar->setBins(2000);
   TH1 *hecor = hdata->createHistogram("hecor",*ecorvar);  
 
+  erawvar->setRange(0.,2000.);
+  erawvar->setBins(2000);
   TH1 *heraw = hdata->createHistogram("heraw",*erawvar);  
 
   //Sigma(E) = Eraw * regression width)
-  RooFormulaVar eres("eres","","@0*@1",RooArgList(*eraw,*widthvar));
-  RooRealVar *ecorvar = (RooRealVar*)hdata->addColumn(ecor);
+  RooFormulaVar eres("eres","","@0*@1",RooArgList(*erawvar,*widthvar));
+  RooRealVar *eresvar = (RooRealVar*)hdata->addColumn(eres);
+  eresvar->setRange(0.,200.);
+  eresvar->setBins(200);
   TH1 *heres = hdata->createHistogram("heres",*eresvar);  
 
   TString filename;
@@ -149,7 +162,7 @@ void RegressionTestingLight(bool dobarrel=true) {
   else if (!dobarrel) 
     filename = "resultsEE_bx25_test.root";
 
-  TFile *file=new TFile(name, "RECREATE");
+  TFile *file=new TFile(filename, "RECREATE");
 
   hecor->Write("Ecor");
   heraw->Write("Eraw");
