@@ -34,15 +34,14 @@
 #include "TChain.h"
 #include "TCut.h"
 #include "TLine.h"
+#include "TH1F.h"
+#include "TH2F.h"
+#include "TCanvas.h"
 #include "TLegend.h"
-#include "RooRandom.h"
-#include "RooAddition.h"
-#include "TSystem.h"
-#include "RooLinearVar.h"
-#include "RooCBExp.h"
-#include "RooCBFast.h"
-#include "RooGaussianFast.h"
-
+#include "TGraphErrors.h"
+#include "TMultiGraph.h"
+#include "TFile.h"
+#include "TStyle.h"
  
 using namespace RooFit;
   
@@ -159,7 +158,7 @@ void RegressionTraining(bool dobarrel=true) {
   TChain *tree;
 
      tree = new TChain("gedPhotonTree/RegressionTree");
-     tree->Add("Trees/RegressionPhoton_ntuple_noPU.root");
+     tree->Add("Trees/RegressionPhoton_ntuple_bx50_new.root");
      //tree->Add("Trees/test_Ben.root");
  /*   
   float xsecs[50];
@@ -237,8 +236,8 @@ void RegressionTraining(bool dobarrel=true) {
   //define transformations corresponding to parameter bounds for non-parametric outputs  
   RooRealConstraint sigwidthlim("sigwidthlim","",*sigwidtht,0.0002,0.5);
   RooRealConstraint sigmeanlim("sigmeanlim","",*sigmeant,0.2,2.0);
-  RooRealConstraint signlim("signlim","",*signt,1.01,20.); 
-  RooRealConstraint sign2lim("sign2lim","",*sign2t,1.01,20.); 
+  RooRealConstraint signlim("signlim","",*signt,1.01,50.); 
+  RooRealConstraint sign2lim("sign2lim","",*sign2t,1.01,50.); 
 
   //define pdf, which depends on transformed outputs (and is intended to be treated as a conditional pdf over the
   //regression inputs in this case)
@@ -262,7 +261,7 @@ void RegressionTraining(bool dobarrel=true) {
   vdata.push_back(hdata);     
   
   //define minimum event weight per tree node
-  double minweight = 200;
+  double minweight = 200;//200
   std::vector<double> minweights;
   minweights.push_back(minweight);
   
@@ -284,9 +283,9 @@ void RegressionTraining(bool dobarrel=true) {
 
     
   if (dobarrel)
-    wereg->writeToFile("/afs/cern.ch/user/b/bcourbon/EnergyRegression/CMSSW_7_3_0_patch1/src/Regression/SemiParametricRegression/wereg_ph_eb.root");    
+    wereg->writeToFile("wereg_ph_eb_bx50_new.root");    
   else if (!dobarrel)
-    wereg->writeToFile("/afs/cern.ch/user/b/bcourbon/EnergyRegression/CMSSW_7_3_0_patch1/src/Regression/SemiParametricRegression/wereg_ph_ee.root");    
+    wereg->writeToFile("wereg_ph_ee_bx50_new.root");    
   
   
   return;
