@@ -15,6 +15,10 @@
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 
+#include "DataFormats/DetId/interface/DetId.h"
+#include "DataFormats/EcalDetId/interface/EBDetId.h"
+#include "DataFormats/EcalDetId/interface/EEDetId.h"
+
 #include "RecoEgamma/EgammaTools/interface/EcalClusterLocal.h"
 
 #include "RecoEcal/EgammaCoreTools/interface/Mustache.h"
@@ -77,6 +81,7 @@ GedPhotonRegTreeMaker::GedPhotonRegTreeMaker(const PSet& p)
     _tree->Branch("scSeedE2x5Left"  , &_scSeedE2x5Left , "scSeedE2x5Left/F");
     _tree->Branch("scSeedE2x5Right"  , &_scSeedE2x5Right , "scSeedE2x5Right/F");
     _tree->Branch("scSeedSigmaIetaIeta"     , &_scSeedSigmaIetaIeta    , "scSeedSigmaIetaIeta/F");
+//    _tree->Branch("scSeedSigmaIetaIeta_full5x5"     , &_scSeedSigmaIetaIeta_full5x5    , "scSeedSigmaIetaIeta_full5x5/F");
     _tree->Branch("scSeedSigmaIetaIphi"     , &_scSeedSigmaIetaIphi    , "scSeedSigmaIetaIphi/F");
     _tree->Branch("scSeedSigmaIphiIphi"     , &_scSeedSigmaIphiIphi    , "scSeedSigmaIphiIphi/F");
     _tree->Branch("scSeedCryEta"            , &_scSeedCryEta           , "scSeedCryEta/F");
@@ -87,6 +92,10 @@ GedPhotonRegTreeMaker::GedPhotonRegTreeMaker(const PSet& p)
     _tree->Branch("scSeedCryY"              , &_scSeedCryY             , "scSeedCryY/F");
     _tree->Branch("scSeedCryIx"             , &_scSeedCryIx            , "scSeedCryIx/F");
     _tree->Branch("scSeedCryIy"             , &_scSeedCryIy            , "scSeedCryIy/F");
+    _tree->Branch("scSeedCryIeta_glob"           , &_scSeedCryIeta_glob          , "scSeedCryIeta_glob/F");
+    _tree->Branch("scSeedCryIphi_glob"           , &_scSeedCryIphi_glob          , "scSeedCryIphi_glob/F");
+    _tree->Branch("scSeedCryIx_glob"             , &_scSeedCryIx_glob            , "scSeedCryIx_glob/F");
+    _tree->Branch("scSeedCryIy_glob"             , &_scSeedCryIy_glob            , "scSeedCryIy_glob/F");
 
     // ecal cluster information
     _clusterRawEnergy     .reset(new float[1], array_deleter<float>());
@@ -329,6 +338,20 @@ void GedPhotonRegTreeMaker::processSuperClusterFillTree(const edm::Event& e, con
         _scSeedCryIphi = 0;
     }
 
+    //Take global coordinates of the seed
+
+    DetId globseed = theseed->seed();
+    if (theseed->hitsAndFractions().at(0).first.subdetId()==EcalBarrel) {
+    EBDetId ebseed(globseed);
+    _scSeedCryIeta_glob = ebseed.ieta();
+    _scSeedCryIphi_glob = ebseed.iphi();
+    }
+    else {
+    EEDetId eeseed(globseed);
+    _scSeedCryIx_glob = eeseed.ix();
+    _scSeedCryIy_glob = eeseed.iy();
+    }
+
 
     // loop over all clusters that aren't the seed
     setTreeArraysForSize(_N_ECALClusters, _N_PSClusters);
@@ -498,6 +521,10 @@ void GedPhotonRegTreeMaker::processNoMatchFillTree(const edm::Event& e, const ed
     _scSeedCryIx   = 0;
     _scSeedCryIy   = 0;
 
+    _scSeedCryIeta_glob = 0;
+    _scSeedCryIphi_glob = 0;
+    _scSeedCryIx_glob   = 0;
+    _scSeedCryIy_glob   = 0;
 
 
     // loop over all clusters that aren't the seed

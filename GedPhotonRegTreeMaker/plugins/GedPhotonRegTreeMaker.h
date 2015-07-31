@@ -117,6 +117,10 @@ class GedPhotonRegTreeMaker : public edm::EDAnalyzer
         float _scSeedCryY;
         float _scSeedCryIx;
         float _scSeedCryIy;
+	float _scSeedCryIeta_glob;
+        float _scSeedCryIphi_glob;
+        float _scSeedCryIx_glob;
+        float _scSeedCryIy_glob;
         float _scSeedE3x3;
         float _scSeedE5x5;
         float _scSeedELeft;
