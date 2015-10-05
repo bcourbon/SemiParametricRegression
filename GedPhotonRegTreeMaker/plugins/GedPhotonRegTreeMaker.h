@@ -20,9 +20,14 @@
 
 #include "RecoParticleFlow/PFClusterTools/interface/PFEnergyCalibration.h"
 
-#include "RecoEcal/EgammaCoreTools/interface/EcalClusterTools.h"
+//#include "RecoEcal/EgammaCoreTools/interface/EcalClusterTools.h"
+#include "../../RecoEcal/EgammaCoreTools/interface/EcalClusterTools.h"
 
-#include "GedPhotonRegTreeMaker/GedPhotonRegTreeMaker/plugins/EcalClusterLazyTools.h"
+//#include "GedPhotonRegTreeMaker/GedPhotonRegTreeMaker/plugins/EcalClusterLazyTools.h"
+
+// #include "RecoEcal/EgammaCoreTools/interface/EcalClusterLazyTools.h"
+
+#include "../../RecoEcal/EgammaCoreTools/interface/EcalClusterLazyTools.h"
 
 
 #include <memory>
@@ -57,15 +62,17 @@ class GedPhotonRegTreeMaker : public edm::EDAnalyzer
         double _matchMaxDR;
         int _matchingType;
         edm::InputTag _phInput;
-        edm::InputTag _ebReducedRecHitCollection;
-        edm::InputTag _eeReducedRecHitCollection;
+        //edm::InputTag _ebReducedRecHitCollection;
+        //edm::InputTag _eeReducedRecHitCollection;
+	edm::EDGetTokenT<EcalRecHitCollection> _ebReducedRecHitCollection;
+        edm::EDGetTokenT<EcalRecHitCollection> _eeReducedRecHitCollection;
         edm::InputTag _PrimaryVertex;
         std::shared_ptr<PFEnergyCalibration> _calib;
         void processSuperClusterFillTree(const edm::Event&, const edm::EventSetup&, const reco::SuperCluster&, const reco::GenParticle&);
         void processNoMatchFillTree(const edm::Event&, const edm::EventSetup&, const reco::GenParticle&);
         void matchPhotonToGen(const reco::PhotonCollection& phs, const reco::GenParticleCollection& gens);
 
-        EcalClusterLazyTools *_lazyTool;
+        noZS::EcalClusterLazyTools *_lazyTool;
 
         std::vector< reco::Photon> _matchedPhotons;
         std::vector< std::pair<reco::GenParticle, int> > _matchedParticles;
@@ -121,6 +128,10 @@ class GedPhotonRegTreeMaker : public edm::EDAnalyzer
         float _scSeedCryIphi_glob;
         float _scSeedCryIx_glob;
         float _scSeedCryIy_glob;
+        float _ixClusterSeed_log;
+        float _iyClusterSeed_log;
+        float _ixClusterSeed_flat;
+        float _iyClusterSeed_flat;
         float _scSeedE3x3;
         float _scSeedE5x5;
         float _scSeedELeft;

@@ -21,9 +21,15 @@
 
 #include "RecoEgamma/EgammaTools/interface/EcalClusterLocal.h"
 
-#include "RecoEcal/EgammaCoreTools/interface/Mustache.h"
+//#include "RecoEcal/EgammaCoreTools/interface/Mustache.h"
+#include "../../RecoEcal/EgammaCoreTools/interface/Mustache.h"
 
 #include "GedPhotonRegTreeMaker/GedPhotonRegTreeMaker/plugins/GedPhotonRegTreeMaker.h"
+
+//#include "RecoEcal/EgammaCoreTools/interface/EcalClusterLazyTools.h"
+#include "../../RecoEcal/EgammaCoreTools/interface/EcalClusterLazyTools.h"
+
+
 
 #include "TTree.h"
 #include "TVector2.h"
@@ -96,6 +102,11 @@ GedPhotonRegTreeMaker::GedPhotonRegTreeMaker(const PSet& p)
     _tree->Branch("scSeedCryIphi_glob"           , &_scSeedCryIphi_glob          , "scSeedCryIphi_glob/F");
     _tree->Branch("scSeedCryIx_glob"             , &_scSeedCryIx_glob            , "scSeedCryIx_glob/F");
     _tree->Branch("scSeedCryIy_glob"             , &_scSeedCryIy_glob            , "scSeedCryIy_glob/F");
+    _tree->Branch("ixClusterSeed_log"             , &_ixClusterSeed_log            , "ixClusterSeed_log/F");
+    _tree->Branch("iyClusterSeed_log"             , &_iyClusterSeed_log            , "iyClusterSeed_log/F");
+    _tree->Branch("ixClusterSeed_flat"             , &_ixClusterSeed_flat            , "ixClusterSeed_flat/F");
+    _tree->Branch("iyClusterSeed_flat"             , &_iyClusterSeed_flat            , "iyClusterSeed_flat/F");
+
 
     // ecal cluster information
     _clusterRawEnergy     .reset(new float[1], array_deleter<float>());
@@ -157,8 +168,13 @@ GedPhotonRegTreeMaker::GedPhotonRegTreeMaker(const PSet& p)
 
 
     _phInput                  = p.getParameter<edm::InputTag>("photonSrc");
-    _ebReducedRecHitCollection = p.getParameter<edm::InputTag>("ebReducedRecHitCollection");
-    _eeReducedRecHitCollection = p.getParameter<edm::InputTag>("eeReducedRecHitCollection");
+    
+    //_ebReducedRecHitCollection = p.getParameter<edm::InputTag>("ebReducedRecHitCollection");
+    //_eeReducedRecHitCollection = p.getParameter<edm::InputTag>("eeReducedRecHitCollection");
+
+    _ebReducedRecHitCollection = consumes<EcalRecHitCollection>(p.getParameter<edm::InputTag>("ebReducedRecHitCollection"));
+    _eeReducedRecHitCollection = consumes<EcalRecHitCollection>(p.getParameter<edm::InputTag>("eeReducedRecHitCollection"));
+
     _PrimaryVertex             = p.getParameter<edm::InputTag>("VtxLabel"); 
     _geninput                  = p.getParameter<edm::InputTag>("genSrc");    
     _matchMinERatio            = p.getParameter<double>("matchMinERatio");
@@ -171,7 +187,9 @@ GedPhotonRegTreeMaker::GedPhotonRegTreeMaker(const PSet& p)
 void GedPhotonRegTreeMaker::analyze(const edm::Event& e, const edm::EventSetup& es) 
 {
 
-    _lazyTool = new EcalClusterLazyTools(e, es, _ebReducedRecHitCollection, _eeReducedRecHitCollection); 
+    _lazyTool = new noZS::EcalClusterLazyTools(e, es, _ebReducedRecHitCollection, _eeReducedRecHitCollection); 
+
+    //noZS::EcalClusterLazyTools _lazyTool(e, es, _ebReducedRecHitCollection, _eeReducedRecHitCollection);
 
     edm::Handle<reco::PhotonCollection> phs;
     edm::Handle<reco::VertexCollection> PV;
@@ -351,6 +369,21 @@ void GedPhotonRegTreeMaker::processSuperClusterFillTree(const edm::Event& e, con
     _scSeedCryIx_glob = eeseed.ix();
     _scSeedCryIy_glob = eeseed.iy();
     }
+	
+    edm::Ptr<reco::CaloCluster> seedCluster = sc.seed();
+    float ixClusterSeed_log(-999);
+    float iyClusterSeed_log(-999);
+    float ixClusterSeed_flat(-999); 
+    float iyClusterSeed_flat(-999);
+
+    ///ix == ieta and iy == phi pour le barrel
+    _lazyTool->basicClusterLocalCoordinates(*seedCluster, ixClusterSeed_log, iyClusterSeed_log, 1 );
+    _lazyTool->basicClusterLocalCoordinates(*seedCluster, ixClusterSeed_flat, iyClusterSeed_flat, 0 );
+
+    _ixClusterSeed_log=ixClusterSeed_log;
+    _iyClusterSeed_log=iyClusterSeed_log;
+    _ixClusterSeed_flat=ixClusterSeed_flat;
+    _iyClusterSeed_flat=iyClusterSeed_flat;
 
 
     // loop over all clusters that aren't the seed
@@ -525,6 +558,11 @@ void GedPhotonRegTreeMaker::processNoMatchFillTree(const edm::Event& e, const ed
     _scSeedCryIphi_glob = 0;
     _scSeedCryIx_glob   = 0;
     _scSeedCryIy_glob   = 0;
+
+    _ixClusterSeed_log   = 0;
+    _iyClusterSeed_log   = 0;
+    _ixClusterSeed_flat   = 0;
+    _iyClusterSeed_flat   = 0;
 
 
     // loop over all clusters that aren't the seed
