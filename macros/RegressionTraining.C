@@ -79,10 +79,9 @@ void RegressionTraining(bool dobarrel=true) {
   
   //build vectors with list of input variables
   std::vector<std::string> *varsf = new std::vector<std::string>;
-
-  varsf->push_back("scRawEnergy");
-  //varsf->push_back("scEta");
-  //varsf->push_back("scPhi");
+   varsf->push_back("scRawEnergy");
+  varsf->push_back("scEta");
+  varsf->push_back("scPhi");
   varsf->push_back("scSeedR9");  
   varsf->push_back("scEtaWidth");
   varsf->push_back("scPhiWidth");  
@@ -116,27 +115,34 @@ void RegressionTraining(bool dobarrel=true) {
   
   varseb->push_back("scSeedE5x5/scSeedRawEnergy");
   
-  //varseb->push_back("scSeedCryIeta");
-  //varseb->push_back("scSeedCryIphi");
-  //varseb->push_back("(scSeedCryIeta-1*abs(scSeedCryIeta)/scSeedCryIeta)%5");
-  //varseb->push_back("(scSeedCryIphi-1)%2");       
-  //varseb->push_back("(abs(scSeedCryIeta)<=25)*((scSeedCryIeta-1*abs(scSeedCryIeta)/scSeedCryIeta)%25) + (abs(scSeedCryIeta)>25)*((scSeedCryIeta-26*abs(scSeedCryIeta)/scSeedCryIeta)%20)");
-  //varseb->push_back("(scSeedCryIphi-1)%20"); 
-  //varseb->push_back("scSeedCryPhi");
-  //varseb->push_back("scSeedCryEta");
+  varseb->push_back("scSeedCryIeta");
+  varseb->push_back("scSeedCryIphi");
+  varseb->push_back("(scSeedCryIeta-1*abs(scSeedCryIeta)/scSeedCryIeta)%5");
+  varseb->push_back("(scSeedCryIphi-1)%2");       
+  varseb->push_back("(abs(scSeedCryIeta)<=25)*((scSeedCryIeta-1*abs(scSeedCryIeta)/scSeedCryIeta)%25) + (abs(scSeedCryIeta)>25)*((scSeedCryIeta-26*abs(scSeedCryIeta)/scSeedCryIeta)%20)");
+  varseb->push_back("(scSeedCryIphi-1)%20"); 
+ 
+ varseb->push_back("scSeedCryPhi");
+  varseb->push_back("scSeedCryEta");
 
-  varseb->push_back("scSeedCryIeta_glob");
-  varseb->push_back("scSeedCryIphi_glob");
+  varseb->push_back("scSeedCryIeta");
+  varseb->push_back("scSeedCryIphi");
+  //varseb->push_back("scSeedCryIeta_glob-ixClusterSeed_log");
+  //varseb->push_back("scSeedCryIphi_glob-iyClusterSeed_log");
 
 
   varsee->push_back("scPreshowerEnergy/scRawEnergy");
   varsee->push_back("scPreshowerEnergyPlane1/scRawEnergy");
   varsee->push_back("scPreshowerEnergyPlane2/scRawEnergy");
     
-  varsee->push_back("scSeedCryIx_glob");
-    varsee->push_back("scSeedCryIy_glob");
+  varsee->push_back("scSeedCryX");
+  varsee->push_back("scSeedCryY");
 
-    
+  varsee->push_back("scSeedCryIx");
+  varsee->push_back("scSeedCryIy");
+  //varsee->push_back("scSeedCryIx_glob-ixClusterSeed_log");
+  //varsee->push_back("scSeedCryIy_glob-iyClusterSeed_log");
+
   //select appropriate input list for barrel or endcap
   std::vector<std::string> *varslist;
   if (dobarrel) varslist = varseb;
@@ -169,7 +175,7 @@ void RegressionTraining(bool dobarrel=true) {
   TChain *tree;
 
      tree = new TChain("gedPhotonTree/RegressionTree");
-     tree->Add("Trees/RegressionPhoton_ntuple_bx50_new.root");
+     tree->Add("Trees/RegressionPhoton_ntuple_bx25_v6.root");
      //tree->Add("Trees/test_Ben.root");
  /*   
   float xsecs[50];
@@ -185,15 +191,15 @@ void RegressionTraining(bool dobarrel=true) {
   //training selection cut
   TCut selcut;
   if (dobarrel) {
-    selcut = "genPt>11. && scIsEB"; 
+    selcut = "genPt>11. && scIsEB"/* && scRawEnergy/genEnergy>0.25"*/; 
   }
   else {
-    selcut = "genPt>11. && !scIsEB";     
+    selcut = "genPt>11. && !scIsEB"/* && scRawEnergy/genEnergy>0.25"*/;     
   }
   
   
   //TCut selweight = "xsecweight(procidx)";
-  TCut prescale10 = "(eventNumber%10==0)";
+    TCut prescale10 = "(eventNumber%10==0)";
   TCut prescale20 = "(eventNumber%20==0)";
   TCut prescale25 = "(eventNumber%25==0)";
   TCut prescale50 = "(eventNumber%50==0)";
@@ -294,9 +300,9 @@ void RegressionTraining(bool dobarrel=true) {
 
     
   if (dobarrel)
-    wereg->writeToFile("wereg_ph_eb_bx50_new.root");    
+    wereg->writeToFile("wereg_ph_eb_bx25_v6.root");    
   else if (!dobarrel)
-    wereg->writeToFile("wereg_ph_ee_bx50_new.root");    
+    wereg->writeToFile("wereg_ph_ee_bx25_v6.root");    
   
   
   return;

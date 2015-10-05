@@ -34,15 +34,14 @@
 #include "TChain.h"
 #include "TCut.h"
 #include "TLine.h"
+#include "TH1F.h"
+#include "TH2F.h"
+#include "TCanvas.h"
 #include "TLegend.h"
-#include "RooRandom.h"
-#include "RooAddition.h"
-#include "TSystem.h"
-#include "RooLinearVar.h"
-#include "RooCBExp.h"
-#include "RooCBFast.h"
-#include "RooGaussianFast.h"
-
+#include "TGraphErrors.h"
+#include "TMultiGraph.h"
+#include "TFile.h"
+#include "TStyle.h"
  
 using namespace RooFit;
   
@@ -75,14 +74,14 @@ void initweights(TChain *chain, float *xsecs, float lumi) {
   
 }
 
-void RegressionTraining(bool dobarrel=true) {
+void RegressionTrainingNoLocal(bool dobarrel=true) {
    
   
   //build vectors with list of input variables
   std::vector<std::string> *varsf = new std::vector<std::string>;
   varsf->push_back("scRawEnergy");
-  varsf->push_back("scEta");
-  varsf->push_back("scPhi");
+  //varsf->push_back("scEta");
+  //varsf->push_back("scPhi");
   varsf->push_back("scSeedR9");  
   varsf->push_back("scEtaWidth");
   varsf->push_back("scPhiWidth");  
@@ -93,6 +92,7 @@ void RegressionTraining(bool dobarrel=true) {
  
   varsf->push_back("scSeedEta-scEta");
   varsf->push_back("atan2(sin(scSeedPhi-scPhi),cos(scSeedPhi-scPhi))");
+
   varsf->push_back("scSeedRawEnergy/scRawEnergy");
   
   varsf->push_back("scSeedE3x3/scSeedE5x5");
@@ -116,17 +116,34 @@ void RegressionTraining(bool dobarrel=true) {
   
   varseb->push_back("scSeedE5x5/scSeedRawEnergy");
   
-  varseb->push_back("scSeedCryIeta");
-  varseb->push_back("scSeedCryIphi");
-  varseb->push_back("(scSeedCryIeta-1*abs(scSeedCryIeta)/scSeedCryIeta)%5");
-  varseb->push_back("(scSeedCryIphi-1)%2");       
-  varseb->push_back("(abs(scSeedCryIeta)<=25)*((scSeedCryIeta-1*abs(scSeedCryIeta)/scSeedCryIeta)%25) + (abs(scSeedCryIeta)>25)*((scSeedCryIeta-26*abs(scSeedCryIeta)/scSeedCryIeta)%20)");
-  varseb->push_back("(scSeedCryIphi-1)%20"); 
-  varseb->push_back("scSeedCryPhi");
-  varseb->push_back("scSeedCryEta");
+  varseb->push_back("scSeedCryIeta_glob");
+  varseb->push_back("scSeedCryIphi_glob");
+  varseb->push_back("(scSeedCryIeta_glob-1*abs(scSeedCryIeta_glob)/scSeedCryIeta_glob)%5");
+  varseb->push_back("(scSeedCryIphi_glob-1)%2");       
+  varseb->push_back("(abs(scSeedCryIeta_glob)<=25)*((scSeedCryIeta_glob-1*abs(scSeedCryIeta_glob)/scSeedCryIeta_glob)%25) + (abs(scSeedCryIeta_glob)>25)*((scSeedCryIeta_glob-26*abs(scSeedCryIeta_glob)/scSeedCryIeta_glob)%20)");
+  varseb->push_back("(scSeedCryIphi_glob-1)%20"); 
+  //varseb->push_back("scSeedCryPhi");
+  //varseb->push_back("scSeedCryEta");
+
+  varseb->push_back("scSeedCryIeta_glob");
+  varseb->push_back("scSeedCryIphi_glob");
+  varseb->push_back("scSeedCryIeta_glob-ixClusterSeed_log");
+  varseb->push_back("scSeedCryIphi_glob-iyClusterSeed_log");
+
 
   varsee->push_back("scPreshowerEnergy/scRawEnergy");
+  varsee->push_back("scPreshowerEnergyPlane1/scRawEnergy");
+  varsee->push_back("scPreshowerEnergyPlane2/scRawEnergy");
     
+  //varsee->push_back("scSeedCryX");
+  //varsee->push_back("scSeedCryY");
+
+  varsee->push_back("scSeedCryIx_glob");
+  varsee->push_back("scSeedCryIy_glob");
+  varsee->push_back("scSeedCryIx_glob-ixClusterSeed_log");
+  varsee->push_back("scSeedCryIy_glob-iyClusterSeed_log");
+
+
   //select appropriate input list for barrel or endcap
   std::vector<std::string> *varslist;
   if (dobarrel) varslist = varseb;
@@ -159,8 +176,8 @@ void RegressionTraining(bool dobarrel=true) {
   TChain *tree;
 
      tree = new TChain("gedPhotonTree/RegressionTree");
-     tree->Add("Trees/RegressionPhoton_ntuple_noPU_small.root");
-
+     tree->Add("Trees/RegressionPhoton_ntuple_bx25_v6.root");
+     //tree->Add("Trees/test_Ben.root");
  /*   
   float xsecs[50];
   xsecs[0] = 0.001835*81930.0;
@@ -175,15 +192,15 @@ void RegressionTraining(bool dobarrel=true) {
   //training selection cut
   TCut selcut;
   if (dobarrel) {
-    selcut = "genPt>16. && scIsEB"; 
+    selcut = "genPt>11. && scIsEB"/* && scRawEnergy/genEnergy>0.25"*/; 
   }
   else {
-    selcut = "genpt>16. && !scIsEB";     
+    selcut = "genPt>11. && !scIsEB"/* && scRawEnergy/genEnergy>0.25"*/;     
   }
   
   
   //TCut selweight = "xsecweight(procidx)";
-  TCut prescale10 = "(eventNumber%10==0)";
+    TCut prescale10 = "(eventNumber%10==0)";
   TCut prescale20 = "(eventNumber%20==0)";
   TCut prescale25 = "(eventNumber%25==0)";
   TCut prescale50 = "(eventNumber%50==0)";
@@ -195,6 +212,7 @@ void RegressionTraining(bool dobarrel=true) {
 
   //weightvar title used for per-event weights and selection cuts
 
+    //weightvar.SetTitle(evenevents/**selweight*/*selcut);
     weightvar.SetTitle(evenevents/**selweight*/*selcut);
 
   //create RooDataSet from TChain
@@ -236,8 +254,8 @@ void RegressionTraining(bool dobarrel=true) {
   //define transformations corresponding to parameter bounds for non-parametric outputs  
   RooRealConstraint sigwidthlim("sigwidthlim","",*sigwidtht,0.0002,0.5);
   RooRealConstraint sigmeanlim("sigmeanlim","",*sigmeant,0.2,2.0);
-  RooRealConstraint signlim("signlim","",*signt,1.01,5000.); 
-  RooRealConstraint sign2lim("sign2lim","",*sign2t,1.01,5000.); 
+  RooRealConstraint signlim("signlim","",*signt,1.01,50.); 
+  RooRealConstraint sign2lim("sign2lim","",*sign2t,1.01,50.); 
 
   //define pdf, which depends on transformed outputs (and is intended to be treated as a conditional pdf over the
   //regression inputs in this case)
@@ -261,7 +279,7 @@ void RegressionTraining(bool dobarrel=true) {
   vdata.push_back(hdata);     
   
   //define minimum event weight per tree node
-  double minweight = 200;
+  double minweight = 200;//200
   std::vector<double> minweights;
   minweights.push_back(minweight);
   
@@ -274,7 +292,7 @@ void RegressionTraining(bool dobarrel=true) {
     bdtpdfdiff.SetShrinkage(0.1);
     bdtpdfdiff.SetMinWeights(minweights);
     bdtpdfdiff.SetMaxNodes(750);
-    bdtpdfdiff.TrainForest(1e6);   
+    bdtpdfdiff.TrainForest(1000);   
   }
      
   //create workspace and output to file
@@ -283,9 +301,9 @@ void RegressionTraining(bool dobarrel=true) {
 
     
   if (dobarrel)
-    wereg->writeToFile("wereg_ph_eb_small.root");    
+    wereg->writeToFile("wereg_ph_eb_bx25_v6_nopositions.root");    
   else if (!dobarrel)
-    wereg->writeToFile("wereg_ph_ee_small.root");    
+    wereg->writeToFile("wereg_ph_ee_bx25_v6_nopositions.root");    
   
   
   return;

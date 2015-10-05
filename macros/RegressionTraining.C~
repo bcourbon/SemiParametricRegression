@@ -79,9 +79,10 @@ void RegressionTraining(bool dobarrel=true) {
   
   //build vectors with list of input variables
   std::vector<std::string> *varsf = new std::vector<std::string>;
+
   varsf->push_back("scRawEnergy");
-  varsf->push_back("scEta");
-  varsf->push_back("scPhi");
+  //varsf->push_back("scEta");
+  //varsf->push_back("scPhi");
   varsf->push_back("scSeedR9");  
   varsf->push_back("scEtaWidth");
   varsf->push_back("scPhiWidth");  
@@ -115,16 +116,26 @@ void RegressionTraining(bool dobarrel=true) {
   
   varseb->push_back("scSeedE5x5/scSeedRawEnergy");
   
-  varseb->push_back("scSeedCryIeta");
-  varseb->push_back("scSeedCryIphi");
-  varseb->push_back("(scSeedCryIeta-1*abs(scSeedCryIeta)/scSeedCryIeta)%5");
-  varseb->push_back("(scSeedCryIphi-1)%2");       
-  varseb->push_back("(abs(scSeedCryIeta)<=25)*((scSeedCryIeta-1*abs(scSeedCryIeta)/scSeedCryIeta)%25) + (abs(scSeedCryIeta)>25)*((scSeedCryIeta-26*abs(scSeedCryIeta)/scSeedCryIeta)%20)");
-  varseb->push_back("(scSeedCryIphi-1)%20"); 
-  varseb->push_back("scSeedCryPhi");
-  varseb->push_back("scSeedCryEta");
+  //varseb->push_back("scSeedCryIeta");
+  //varseb->push_back("scSeedCryIphi");
+  //varseb->push_back("(scSeedCryIeta-1*abs(scSeedCryIeta)/scSeedCryIeta)%5");
+  //varseb->push_back("(scSeedCryIphi-1)%2");       
+  //varseb->push_back("(abs(scSeedCryIeta)<=25)*((scSeedCryIeta-1*abs(scSeedCryIeta)/scSeedCryIeta)%25) + (abs(scSeedCryIeta)>25)*((scSeedCryIeta-26*abs(scSeedCryIeta)/scSeedCryIeta)%20)");
+  //varseb->push_back("(scSeedCryIphi-1)%20"); 
+  //varseb->push_back("scSeedCryPhi");
+  //varseb->push_back("scSeedCryEta");
+
+  varseb->push_back("scSeedCryIeta_glob");
+  varseb->push_back("scSeedCryIphi_glob");
+
 
   varsee->push_back("scPreshowerEnergy/scRawEnergy");
+  varsee->push_back("scPreshowerEnergyPlane1/scRawEnergy");
+  varsee->push_back("scPreshowerEnergyPlane2/scRawEnergy");
+    
+  varsee->push_back("scSeedCryIx_glob");
+    varsee->push_back("scSeedCryIy_glob");
+
     
   //select appropriate input list for barrel or endcap
   std::vector<std::string> *varslist;
@@ -174,10 +185,10 @@ void RegressionTraining(bool dobarrel=true) {
   //training selection cut
   TCut selcut;
   if (dobarrel) {
-    selcut = "genPt>16. && scIsEB"; 
+    selcut = "genPt>11. && scIsEB"; 
   }
   else {
-    selcut = "genPt>16. && !scIsEB";     
+    selcut = "genPt>11. && !scIsEB";     
   }
   
   
